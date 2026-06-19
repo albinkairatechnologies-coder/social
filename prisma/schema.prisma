@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String // Hashed password
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  posts         Post[]
+  media         Media[]
+}
+
+model Account {
+  id                  String   @id @default(cuid())
+  userId              String
+  provider            String   // 'instagram' or 'linkedin'
+  providerAccountId   String   // Platform user ID
+  accessToken         String   // ENCRYPTED access token
+  refreshToken        String?  // ENCRYPTED refresh token (optional)
+  expiresAt           DateTime? // Access token expiry date
+  platformUsername    String?  // Username (e.g., @creatorsign)
+  platformDisplayName String?  // Display Name (e.g., Creator Sign)
+  platformAvatarUrl   String?  // Profile picture URL
+  pages               String?  // Optional: connected pages/companies metadata (JSON string)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Post {
+  id           String    @id @default(cuid())
+  userId       String
+  caption      String
+  firstComment String?   // Optional: First comment (often hashtags)
+  hashtags     String?
+  location     String?   // Location tag
+  scheduledAt  DateTime? // When the post should go out
+  publishedAt  DateTime? // When the post actually went out
+  status       String    @default("DRAFT") // DRAFT, SCHEDULED, PUBLISHED, FAILED
+  platforms    String    // JSON string of ["INSTAGRAM", "LINKEDIN"]
+  errorLog     String?   // Error messages if publication failed
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media       Media[]
+  publishJobs PublishJob[]
+  analytics   Analytics[]
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String   // Local path or external URL (Vercel Blob / Supabase)
+  type      String   // IMAGE or VIDEO
+  width     Int?
+  height    Int?
+  size      Int?     // Size in bytes
+  source    String   // UPLOAD or AI_GENERATED
+  postId    String?
+  createdAt DateTime @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+}
+
+model PublishJob {
+  id          String    @id @default(cuid())
+  postId      String
+  platform    String    // INSTAGRAM or LINKEDIN
+  status      String    @default("PENDING") // PENDING, PROCESSING, SUCCESS, FAILED
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  error       String?
+  runAt       DateTime  // Time to execute the job
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  postId      String
+  platform    String   // INSTAGRAM or LINKEDIN
+  impressions Int      @default(0)
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  clicks      Int      @default(0) // For LinkedIn CTR
+  saves       Int      @default(0) // For Instagram saves
+  recordedAt  DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
