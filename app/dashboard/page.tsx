@@ -70,7 +70,7 @@ export default function Dashboard() {
   const [showConnectModal, setShowConnectModal] = useState<
     "instagram" | "linkedin" | null
   >(null);
-  const [connectMode, setConnectMode] = useState<"mock" | "manual">("mock");
+  const [connectMode, setConnectMode] = useState<"mock" | "oauth" | "manual">("oauth");
   const [connectUsername, setConnectUsername] = useState("");
   const [connectDisplayName, setConnectDisplayName] = useState("");
   const [connectAccessToken, setConnectAccessToken] = useState("");
@@ -84,6 +84,24 @@ export default function Dashboard() {
       router.push("/login");
     }
   }, [status, router]);
+
+  // Handle OAuth callback status from URL search params
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const oauthStatus = params.get("status");
+      const platform = params.get("platform");
+      const message = params.get("message");
+
+      if (oauthStatus === "success") {
+        alert(`Successfully connected your ${platform === "instagram" ? "Instagram" : "LinkedIn"} account!`);
+        router.replace("/dashboard");
+      } else if (oauthStatus === "error") {
+        alert(`Failed to connect account: ${message || "Unknown error"}`);
+        router.replace("/dashboard");
+      }
+    }
+  }, [router]);
 
   const fetchDashboardData = async () => {
     if (!session?.user) return;
@@ -125,7 +143,10 @@ export default function Dashboard() {
       let url = "";
       let body = {};
 
-      if (connectMode === "mock") {
+      if (connectMode === "oauth") {
+        window.location.href = `/api/auth/${showConnectModal}/connect`;
+        return;
+      } else if (connectMode === "mock") {
         url = "/api/auth/mock-connect";
         body = {
           provider: showConnectModal,
@@ -839,30 +860,57 @@ export default function Dashboard() {
             {/* Mode Toggle */}
             <div className="flex bg-slate-100 dark:bg-slate-950 rounded-lg p-1 border border-slate-200 dark:border-slate-800">
               <button
+                type="button"
+                onClick={() => setConnectMode("oauth")}
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
+                  connectMode === "oauth" ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm" : "text-slate-400 dark:text-slate-500"
+                }`}
+              >
+                1-Click OAuth
+              </button>
+              <button
+                type="button"
                 onClick={() => setConnectMode("mock")}
-                className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
                   connectMode === "mock" ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm" : "text-slate-400 dark:text-slate-500"
                 }`}
               >
                 Sandbox (Mock)
               </button>
               <button
+                type="button"
                 onClick={() => setConnectMode("manual")}
-                className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
                   connectMode === "manual" ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm" : "text-slate-400 dark:text-slate-500"
                 }`}
               >
-                Manual API Keys
+                Manual Keys
               </button>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-              {connectMode === "mock"
+              {connectMode === "oauth"
+                ? `Connect your real ${showConnectModal === "instagram" ? "Instagram/Facebook" : "LinkedIn"} profile securely via official OAuth integration.`
+                : connectMode === "mock"
                 ? "This simulates OAuth for local testing. No real API calls will be made."
                 : "Enter your API credentials manually. Tokens are encrypted before storage."}
             </p>
 
             <div className="space-y-3">
+              {connectMode === "oauth" && (
+                <div className="flex flex-col items-center justify-center py-6 text-center space-y-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl p-4 border border-slate-100 dark:border-slate-850">
+                  <div className="text-3xl">🔑</div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                      Redirecting to {showConnectModal === "instagram" ? "Facebook" : "LinkedIn"}
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 max-w-xs">
+                      You will authorize SocialForge to publish posts on your behalf.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {connectMode === "manual" && (
                 <>
                   <div className="flex flex-col gap-1.5">
@@ -904,30 +952,34 @@ export default function Dashboard() {
                 </>
               )}
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Platform Username
-                </label>
-                <input
-                  type="text"
-                  placeholder={showConnectModal === "instagram" ? "e.g., creator_forge" : "e.g., in/creator-forge"}
-                  value={connectUsername}
-                  onChange={(e) => setConnectUsername(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-850 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-950 focus:border-teal-500 focus:outline-none"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Display Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., SocialForge Creator Page"
-                  value={connectDisplayName}
-                  onChange={(e) => setConnectDisplayName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-850 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-950 focus:border-teal-500 focus:outline-none"
-                />
-              </div>
+              {connectMode !== "oauth" && (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      Platform Username
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={showConnectModal === "instagram" ? "e.g., creator_forge" : "e.g., in/creator-forge"}
+                      value={connectUsername}
+                      onChange={(e) => setConnectUsername(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-850 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-950 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      Display Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., SocialForge Creator Page"
+                      value={connectDisplayName}
+                      onChange={(e) => setConnectDisplayName(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-850 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-950 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -943,14 +995,21 @@ export default function Dashboard() {
                 onClick={handleConnect}
                 disabled={
                   connectLoading ||
-                  !connectUsername ||
-                  (connectMode === "manual" && (!connectAccessToken || !connectAccountId || !connectDisplayName))
+                  (connectMode === "mock" && !connectUsername) ||
+                  (connectMode === "manual" && (!connectAccessToken || !connectAccountId || !connectDisplayName || !connectUsername))
                 }
                 className="flex-1 bg-slate-900 hover:bg-slate-800 dark:bg-gradient-to-r dark:from-teal-500 dark:to-indigo-500 dark:hover:from-teal-400 dark:hover:to-indigo-400 text-white dark:text-slate-950 font-bold rounded-lg py-2 text-xs disabled:bg-slate-200 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
               >
-                {connectLoading ? <RefreshCw className="h-3 w-3 animate-spin text-white dark:text-slate-950" /> : "Connect"}
+                {connectLoading ? (
+                  <RefreshCw className="h-3 w-3 animate-spin text-white dark:text-slate-950" />
+                ) : connectMode === "oauth" ? (
+                  `Authorize on ${showConnectModal === "instagram" ? "Facebook" : "LinkedIn"}`
+                ) : (
+                  "Connect"
+                )}
               </button>
             </div>
+
           </div>
         </div>
       )}
