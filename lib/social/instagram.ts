@@ -92,40 +92,43 @@ export async function publishToInstagram(params: {
     const containerData = await containerResponse.json();
     const containerId = containerData.id;
 
-    // 2. Poll Container Status (Especially critical for Reels which take time to transcode on Facebook servers)
-    console.log(`Media container created (ID: ${containerId}). Polling status...`);
-    let isFinished = false;
-    let attempts = 0;
-    const maxAttempts = 30; // Max 5 minutes (10s intervals)
+    // 2. Poll Container Status (Only required for videos/Reels which require asynchronous transcoding)
+    if (mediaType === "VIDEO" || isReel) {
+      console.log(`Media container created (ID: ${containerId}). Polling status...`);
+      let isFinished = false;
+      let attempts = 0;
+      const maxAttempts = 30; // Max 5 minutes (10s intervals)
 
-    while (!isFinished && attempts < maxAttempts) {
-      attempts++;
-      // Wait 10 seconds between checks
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      while (!isFinished && attempts < maxAttempts) {
+        attempts++;
+        // Wait 10 seconds between checks
+        await new Promise((resolve) => setTimeout(resolve, 10000));
 
-      const statusResponse = await fetch(
-        `${baseUrl}/${containerId}?fields=status_code,error_message&access_token=${accessToken}`
-      );
-      
-      if (!statusResponse.ok) {
-        throw new Error(`Failed to fetch container status: Status code ${statusResponse.status}`);
+        const statusResponse = await fetch(
+          `${baseUrl}/${containerId}?fields=status_code,error_message&access_token=${accessToken}`
+        );
+        
+        if (!statusResponse.ok) {
+          throw new Error(`Failed to fetch container status: Status code ${statusResponse.status}`);
+        }
+
+        const statusData = await statusResponse.json();
+        const statusCode = statusData.status_code;
+
+        console.log(`Poll attempt ${attempts}: Status is "${statusCode}"`);
+
+        if (statusCode === "FINISHED") {
+          isFinished = true;
+        } else if (statusCode === "ERROR") {
+          throw new Error(`Instagram processing error: ${statusData.error_message || "Unknown transcode failure"}`);
+        }
       }
 
-      const statusData = await statusResponse.json();
-      const statusCode = statusData.status_code;
-
-      console.log(`Poll attempt ${attempts}: Status is "${statusCode}"`);
-
-      if (statusCode === "FINISHED") {
-        isFinished = true;
-      } else if (statusCode === "ERROR") {
-        throw new Error(`Instagram processing error: ${statusData.error_message || "Unknown transcode failure"}`);
+      if (!isFinished) {
+        throw new Error("Instagram Reels transcode timed out on Meta servers.");
       }
     }
 
-    if (!isFinished) {
-      throw new Error("Instagram Reels transcode timed out on Meta servers.");
-    }
 
     // 3. Publish the Media Container
     console.log(`Publishing container ${containerId}...`);
