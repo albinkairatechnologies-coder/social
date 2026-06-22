@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const { provider, username, displayName } = await req.json();
 
-    if (!provider || !["instagram", "linkedin"].includes(provider)) {
+    if (!provider || !["instagram", "linkedin", "twitter", "facebook"].includes(provider)) {
       return NextResponse.json({ error: "Invalid provider specified." }, { status: 400 });
     }
 

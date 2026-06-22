@@ -69,6 +69,27 @@ export default function ComposerPage() {
     }
   }, []);
 
+  // Media Library states
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [mediaLibraryItems, setMediaLibraryItems] = useState<Array<{ id: string; url: string; type: "IMAGE" | "VIDEO"; createdAt: string; size?: number }>>([]);
+  const [loadingMediaLibrary, setLoadingMediaLibrary] = useState(false);
+
+  const handleOpenMediaLibrary = async () => {
+    setShowMediaLibrary(true);
+    setLoadingMediaLibrary(true);
+    try {
+      const res = await fetch("/api/media");
+      const data = await res.json();
+      if (res.ok) {
+        setMediaLibraryItems(data.media || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMediaLibrary(false);
+    }
+  };
+
   // AI Text Generator State
   const [textPrompt, setTextPrompt] = useState("");
   const [isGeneratingText, setIsGeneratingText] = useState(false);
@@ -306,38 +327,68 @@ export default function ComposerPage() {
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 p-6 shadow-sm space-y-6">
               {/* Select Platforms */}
               <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Target Platforms</label>
-                <div className="flex gap-4">
+                <label className="text-xs font-bold text-slate-655 dark:text-slate-300">Target Platforms</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <button
                     type="button"
                     onClick={() => togglePlatform("INSTAGRAM")}
-                    className={`flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold transition-all duration-300 cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl border text-xs font-bold transition-all duration-300 cursor-pointer ${
                       platforms.includes("INSTAGRAM")
-                        ? "border-pink-500 bg-pink-50 dark:bg-pink-950/20 text-pink-600 dark:text-pink-400 shadow-sm"
-                        : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-slate-350 dark:hover:border-slate-700"
+                        ? "border-pink-500 bg-pink-50 dark:bg-pink-955/20 text-pink-600 dark:text-pink-400 shadow-sm"
+                        : "border-slate-205 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-slate-350"
                     }`}
                   >
-                    <span className="text-base">📸</span>
-                    Instagram (Posts & Reels)
+                    📸 Instagram
                   </button>
                   <button
                     type="button"
                     onClick={() => togglePlatform("LINKEDIN")}
-                    className={`flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold transition-all duration-300 cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl border text-xs font-bold transition-all duration-300 cursor-pointer ${
                       platforms.includes("LINKEDIN")
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 text-blue-650 dark:text-blue-400 shadow-sm"
-                        : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-slate-350 dark:hover:border-slate-700"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-955/20 text-blue-650 dark:text-blue-400 shadow-sm"
+                        : "border-slate-205 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-slate-350"
                     }`}
                   >
-                    <span className="text-base">💼</span>
-                    LinkedIn (UGC Share)
+                    💼 LinkedIn
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => togglePlatform("TWITTER")}
+                    className={`flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl border text-xs font-bold transition-all duration-300 cursor-pointer ${
+                      platforms.includes("TWITTER")
+                        ? "border-sky-500 bg-sky-50 dark:bg-sky-955/20 text-sky-600 dark:text-sky-400 shadow-sm"
+                        : "border-slate-205 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-slate-350"
+                    }`}
+                  >
+                    🐦 Twitter/X
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => togglePlatform("FACEBOOK")}
+                    className={`flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl border text-xs font-bold transition-all duration-300 cursor-pointer ${
+                      platforms.includes("FACEBOOK")
+                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-955/20 text-indigo-650 dark:text-indigo-400 shadow-sm"
+                        : "border-slate-205 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-slate-350"
+                    }`}
+                  >
+                    👥 Facebook
                   </button>
                 </div>
               </div>
 
               {/* Caption Text Box */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Post Caption</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-655 dark:text-slate-300">Post Caption</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-450 font-mono">{caption.length} chars</span>
+                    {platforms.includes("TWITTER") && (
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${caption.length > 280 ? "text-red-500 bg-red-50 dark:bg-red-950/25 animate-pulse font-bold" : "text-sky-550 bg-sky-50 dark:bg-sky-955/20 font-bold"}`}>
+                        Twitter/X Limit: 280
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <textarea
                   rows={6}
                   value={caption}
@@ -352,7 +403,7 @@ export default function ComposerPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                    Instagram First Comment <span className="text-slate-400 dark:text-slate-500 font-medium">(Optional)</span>
+                    Instagram/Facebook Comment <span className="text-slate-400 dark:text-slate-550 font-medium">(Optional)</span>
                   </label>
                   <textarea
                     rows={3}
@@ -364,7 +415,7 @@ export default function ComposerPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                    Post Hashtags <span className="text-slate-400 dark:text-slate-500 font-medium">(Inline list)</span>
+                    Post Hashtags <span className="text-slate-400 dark:text-slate-555 font-medium">(Inline list)</span>
                   </label>
                   <textarea
                     rows={3}
@@ -385,8 +436,8 @@ export default function ComposerPage() {
                       type="text"
                       value={mediaUrl}
                       onChange={(e) => setMediaUrl(e.target.value)}
-                      placeholder="Paste image/video URL, or upload, or generate on the right..."
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 pl-10 pr-3 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-455 focus:bg-white dark:focus:bg-slate-950 focus:border-purple-500 focus:outline-none transition-all font-medium"
+                      placeholder="Paste image/video URL, upload, or choose from Library..."
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 pl-10 pr-20 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-455 focus:bg-white dark:focus:bg-slate-950 focus:border-purple-500 focus:outline-none transition-all font-medium"
                     />
                     <button
                       type="button"
@@ -400,6 +451,13 @@ export default function ComposerPage() {
                       ) : (
                         <Upload className="h-4 w-4" />
                       )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaLibrary(true)}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold bg-purple-50 hover:bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 transition-colors cursor-pointer"
+                    >
+                      Library
                     </button>
                     <input
                       type="file"
@@ -419,7 +477,7 @@ export default function ComposerPage() {
                   </select>
                 </div>
                 {mediaUrl && (
-                  <div className="text-[10px] text-slate-450 dark:text-slate-500 flex items-center gap-1 font-medium">
+                  <div className="text-[10px] text-slate-450 dark:text-slate-550 flex items-center gap-1 font-medium">
                     <span>Active URL:</span>
                     <span className="text-slate-600 dark:text-slate-400 font-mono truncate max-w-sm">{mediaUrl}</span>
                   </div>
@@ -444,7 +502,7 @@ export default function ComposerPage() {
                 <div className="flex items-end">
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (platforms.includes("TWITTER") && caption.length > 280)}
                     className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-850 dark:bg-gradient-to-r dark:from-teal-500 dark:to-emerald-500 dark:hover:from-teal-400 dark:hover:to-emerald-400 px-4 py-3 text-sm font-extrabold text-white dark:text-slate-950 cursor-pointer shadow-md transition-all duration-300 transform active:scale-95 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
@@ -480,6 +538,95 @@ export default function ComposerPage() {
           <ImageGenerator onSelectImage={handleSelectAIAsset} />
         </div>
       </div>
+
+      {/* Media Library Overlay Modal */}
+      {showMediaLibrary && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-6 py-4.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-slate-105">
+                  Workspace Media Assets
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Select an asset to attach it to your post draft</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMediaLibrary(false)}
+                className="h-8 w-8 rounded-lg border border-slate-205 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center cursor-pointer transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {loadingMediaLibrary ? (
+                <div className="h-48 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-purple-650" />
+                  <span className="text-xs text-slate-405 font-bold">Scanning media gallery...</span>
+                </div>
+              ) : mediaLibraryItems.length === 0 ? (
+                <div className="py-16 text-center space-y-4">
+                  <div className="w-14 h-14 rounded-full bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center text-2xl mx-auto">
+                    🖼️
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No media assets found</p>
+                    <p className="text-[10px] text-slate-400 max-w-sm mx-auto leading-relaxed">
+                      Upload local files or trigger the AI Visual Forge assistant on the composer dashboard to save media assets to your gallery.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {mediaLibraryItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setMediaUrl(item.url);
+                        setMediaType(item.type);
+                        setShowMediaLibrary(false);
+                      }}
+                      className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-2.5 hover:border-purple-500 dark:hover:border-purple-500 transition-all text-left flex flex-col gap-2 cursor-pointer shadow-sm relative overflow-hidden"
+                    >
+                      {/* Thumbnail container */}
+                      <div className="aspect-square w-full rounded-xl bg-slate-100 dark:bg-slate-900 relative overflow-hidden shadow-inner">
+                        {item.type === "VIDEO" ? (
+                          <div className="w-full h-full flex items-center justify-center text-2xl bg-slate-200 dark:bg-slate-800">
+                            🎥
+                          </div>
+                        ) : (
+                          <img
+                            src={item.url}
+                            alt="Media Asset"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        )}
+                        <span className="absolute top-1.5 right-1.5 text-[8px] font-black px-1.5 py-0.5 rounded bg-black/60 text-white tracking-wider backdrop-blur-sm">
+                          {item.type}
+                        </span>
+                      </div>
+
+                      {/* Details */}
+                      <div className="px-0.5">
+                        <span className="text-[9px] text-slate-500 dark:text-slate-400 font-mono truncate block">
+                          {item.url.split("/").pop()}
+                        </span>
+                        <span className="text-[8px] text-slate-400 block -mt-0.5">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

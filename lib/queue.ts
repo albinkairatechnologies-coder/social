@@ -1,8 +1,9 @@
-import fs from "fs";
-import path from "path";
 import { prisma } from "./prisma";
 import { publishToInstagram } from "./social/instagram";
 import { publishToLinkedIn } from "./social/linkedin";
+import { publishToTwitter } from "./social/twitter";
+import { publishToFacebook } from "./social/facebook";
+
 
 /**
  * Creates background PublishJob entries for a scheduled post.
@@ -100,23 +101,14 @@ export async function processDueJobs(): Promise<{ processedCount: number; succes
       let result: { success: boolean; platformPostId?: string; error?: string };
 
       if (job.platform === "INSTAGRAM") {
-        if (!mediaItem) {
+        if (!mediaItem || !mediaItem.url) {
           throw new Error("Instagram posts require at least one image or video asset.");
-        }
-
-        // Instagram Graph API requires an absolute public URL.
-        // For local development, if media URL is relative, construct a public fallback
-        // or let it pass so the simulation mock handles it.
-        let publicMediaUrl = mediaItem.url;
-        if (mediaItem.url.startsWith("/")) {
-          const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-          publicMediaUrl = `${appUrl}${mediaItem.url}`;
         }
 
         result = await publishToInstagram({
           encryptedAccessToken: account.accessToken,
           instagramUserId: account.providerAccountId,
-          mediaUrl: publicMediaUrl,
+          mediaUrl: mediaItem.url,
           mediaType: mediaItem.type as "IMAGE" | "VIDEO",
           caption: post.caption,
           isReel: mediaItem.type === "VIDEO",
@@ -125,28 +117,19 @@ export async function processDueJobs(): Promise<{ processedCount: number; succes
         let mediaBuffer: Buffer | undefined;
         let mimeType: string | undefined;
 
-        if (mediaItem) {
-          // If we have a local upload, read the file into a buffer to perform a binary upload to LinkedIn
-          if (mediaItem.url.startsWith("/uploads/")) {
-            const localPath = path.join(process.cwd(), "public", mediaItem.url);
-            if (fs.existsSync(localPath)) {
-              mediaBuffer = await fs.promises.readFile(localPath);
-              mimeType = mediaItem.type === "VIDEO" ? "video/mp4" : "image/jpeg";
+        if (mediaItem && mediaItem.url) {
+          try {
+            console.log(`[Queue Worker] Downloading remote media asset: ${mediaItem.url}`);
+            const res = await fetch(mediaItem.url);
+            if (res.ok) {
+              const arrayBuffer = await res.arrayBuffer();
+              mediaBuffer = Buffer.from(arrayBuffer);
+              mimeType = res.headers.get("content-type") || (mediaItem.type === "VIDEO" ? "video/mp4" : "image/jpeg");
+            } else {
+              console.error(`[Queue Worker] Failed to fetch remote media: HTTP ${res.status}`);
             }
-          } else if (mediaItem.url.startsWith("http")) {
-            try {
-              console.log(`[Queue Worker] Downloading remote media asset: ${mediaItem.url}`);
-              const res = await fetch(mediaItem.url);
-              if (res.ok) {
-                const arrayBuffer = await res.arrayBuffer();
-                mediaBuffer = Buffer.from(arrayBuffer);
-                mimeType = res.headers.get("content-type") || (mediaItem.type === "VIDEO" ? "video/mp4" : "image/jpeg");
-              } else {
-                console.error(`[Queue Worker] Failed to fetch remote media: HTTP ${res.status}`);
-              }
-            } catch (err) {
-              console.error("[Queue Worker] Remote media fetch exception:", err);
-            }
+          } catch (err) {
+            console.error("[Queue Worker] Remote media fetch exception:", err);
           }
         }
 
@@ -156,6 +139,22 @@ export async function processDueJobs(): Promise<{ processedCount: number; succes
           caption: post.caption,
           mediaBuffer,
           mediaMimeType: mimeType,
+          mediaType: mediaItem ? (mediaItem.type as "IMAGE" | "VIDEO") : undefined,
+        });
+      } else if (job.platform === "TWITTER") {
+        result = await publishToTwitter({
+          encryptedAccessToken: account.accessToken,
+          authorId: account.providerAccountId,
+          caption: post.caption,
+          mediaUrl: mediaItem?.url,
+          mediaType: mediaItem ? (mediaItem.type as "IMAGE" | "VIDEO") : undefined,
+        });
+      } else if (job.platform === "FACEBOOK") {
+        result = await publishToFacebook({
+          encryptedAccessToken: account.accessToken,
+          pageId: account.providerAccountId,
+          caption: post.caption,
+          mediaUrl: mediaItem?.url,
           mediaType: mediaItem ? (mediaItem.type as "IMAGE" | "VIDEO") : undefined,
         });
       } else {

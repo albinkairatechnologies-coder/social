@@ -18,14 +18,19 @@ interface PublishResult {
 export async function publishToInstagram(params: {
   encryptedAccessToken: string;
   instagramUserId: string;
-  mediaUrl: string;
-  mediaType: "IMAGE" | "VIDEO";
+  mediaUrl?: string | null;
+  mediaType?: "IMAGE" | "VIDEO" | null;
   caption: string;
   isReel?: boolean;
 }): Promise<PublishResult> {
   const { encryptedAccessToken, instagramUserId, mediaUrl, mediaType, caption, isReel } = params;
 
+  if (!mediaUrl) {
+    throw new Error("Instagram posts require at least one image or video asset.");
+  }
+
   // Decrypt token for API usage
+
   let accessToken: string;
   try {
     accessToken = decrypt(encryptedAccessToken);

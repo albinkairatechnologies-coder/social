@@ -6,9 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
 
 model User {
   id            String    @id @default(cuid())
@@ -62,6 +63,7 @@ model Post {
   media       Media[]
   publishJobs PublishJob[]
   analytics   Analytics[]
+  comments    Comment[]
 }
 
 model Media {
@@ -110,3 +112,28 @@ model Analytics {
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
+
+model Comment {
+  id           String   @id @default(cuid())
+  postId       String
+  authorName   String
+  authorAvatar String?
+  text         String
+  sentiment    String   // POSITIVE, NEUTRAL, NEGATIVE
+  createdAt    DateTime @default(now())
+  parentId     String?  // References parent comment id if reply
+  isAdmin      Boolean  @default(false)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // INFO, SUCCESS, ALERT, ENGAGEMENT
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
