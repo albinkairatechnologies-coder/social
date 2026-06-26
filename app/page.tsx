@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
+  Menu,
+  X,
   Sparkles,
   Calendar,
   Clock,
@@ -71,6 +73,7 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleDemoLogin = async () => {
     setIsDemoLoading(true);
@@ -202,7 +205,8 @@ export default function Home() {
           {/* Dynamic Auth Actions */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            {status === "authenticated" ? (
+            <div className="hidden md:flex items-center gap-3">
+              {status === "authenticated" ? (
               <Link
                 href="/dashboard"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 px-4.5 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-200 transition-all transform active:scale-95 cursor-pointer"
@@ -234,8 +238,62 @@ export default function Home() {
                 </Link>
               </>
             )}
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-slate-600 hover:text-indigo-600 transition-colors focus:outline-none"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden mt-4 pt-4 border-t border-slate-100 flex flex-col gap-4 pb-2 animate-fade-in">
+            <nav className="flex flex-col gap-3 text-sm font-bold text-slate-600">
+              <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 hover:text-indigo-600 hover:bg-slate-50 rounded-lg">Features</a>
+              <a href="#simulator" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 hover:text-indigo-600 hover:bg-slate-50 rounded-lg">Sandbox Demo</a>
+              <a href="#workflow" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 hover:text-indigo-600 hover:bg-slate-50 rounded-lg">Workflow</a>
+              <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 hover:text-indigo-600 hover:bg-slate-50 rounded-lg">FAQ</a>
+            </nav>
+            <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
+              {status === "authenticated" ? (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-md"
+                >
+                  <span>Console</span>
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleDemoLogin();
+                    }}
+                    disabled={isDemoLoading}
+                    className="w-full text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 py-3 rounded-xl flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>Demo Access</span>
+                  </button>
+                  <Link
+                    href="/login?mode=signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-3 text-sm font-bold text-white shadow-lg"
+                  >
+                    <span>Launch Free</span>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* 2. Hero Section */}

@@ -242,7 +242,7 @@ export default function ComposerPage() {
     <div className="min-h-screen bg-slate-50/65 dark:bg-slate-950 text-slate-800 dark:text-slate-100 pb-12 font-sans selection:bg-purple-100 selection:text-purple-900 transition-colors duration-300">
       {/* Premium Header */}
       <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-900 px-6 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
@@ -257,7 +257,7 @@ export default function ComposerPage() {
               <p className="text-xs text-slate-500">Draft, generate media, preview live layout, and publish</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
             <ThemeToggle />
             <div className="flex items-center gap-2 text-xs bg-slate-150/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-full text-slate-655 dark:text-slate-450 font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -293,7 +293,7 @@ export default function ComposerPage() {
               <Sparkles className="h-4 w-4 text-purple-500" />
               AI Copywriting Assistant (Gemini)
             </h3>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 value={textPrompt}

@@ -113,7 +113,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/65 dark:bg-background text-foreground flex flex-col items-center justify-center p-4 relative transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50/65 dark:bg-background text-foreground flex flex-col items-center justify-center p-4 sm:p-8 relative transition-colors duration-300">
       
       {/* Top Floating Controls */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
@@ -127,7 +127,7 @@ export default function LoginPage() {
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md space-y-6 mt-12 sm:mt-0">
         <div className="text-center space-y-2">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-400 to-indigo-500 flex items-center justify-center shadow-lg">
             <Sparkles className="w-7 h-7 text-white" />
@@ -140,7 +140,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-8 shadow-xl shadow-slate-150/10 dark:shadow-none transition-all">
+        <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-150/10 dark:shadow-none transition-all">
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div className="space-y-1.5">
