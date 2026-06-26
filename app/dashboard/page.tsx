@@ -103,7 +103,7 @@ export default function Dashboard() {
 
   // Connection overlay states
   const [showConnectModal, setShowConnectModal] = useState<
-    "instagram" | "linkedin" | null
+    "instagram" | "linkedin" | "facebook" | null
   >(null);
   const [connectMode, setConnectMode] = useState<"mock" | "oauth" | "manual">("oauth");
   const [connectUsername, setConnectUsername] = useState("");
@@ -1264,6 +1264,61 @@ export default function Dashboard() {
                     </button>
                   )}
                 </div>
+
+                {/* Facebook Channel */}
+                <div className="rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-955/40 p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">👥</span>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Facebook Pages API</h4>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500">Facebook Page Integration</p>
+                      </div>
+                    </div>
+                    {accounts.some((a) => a.provider === "facebook") ? (
+                      <span className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                        Connected
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-855 px-2 py-0.5 rounded-full font-bold">
+                        Offline
+                      </span>
+                    )}
+                  </div>
+
+                  {accounts.some((a) => a.provider === "facebook") ? (
+                    <div className="space-y-3">
+                      <div className="bg-white dark:bg-slate-900/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-[10px] text-indigo-500 dark:text-indigo-400">FB</div>
+                          <span className="text-slate-700 dark:text-slate-300 font-bold">{accounts.find((a) => a.provider === "facebook")?.platformUsername}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDisconnect("facebook")}
+                          className="text-[10px] text-rose-600 dark:text-rose-455 hover:text-rose-500 dark:hover:text-rose-300 font-extrabold cursor-pointer hover:underline"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowConnectModal("facebook")}
+                        className="w-full bg-slate-100 dark:bg-slate-805 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg py-1.5 text-[10px] font-bold transition-all cursor-pointer"
+                      >
+                        Swap / Update Account
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowConnectModal("facebook")}
+                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2 text-xs font-bold transition-all duration-300 cursor-pointer shadow-md shadow-indigo-100 dark:shadow-none"
+                    >
+                      Connect Sandbox FB Page
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1668,7 +1723,7 @@ export default function Dashboard() {
           <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-2xl relative">
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <span>🔗</span>
-              Link {showConnectModal === "instagram" ? "Instagram" : "LinkedIn"} Page
+              Link {showConnectModal === "instagram" ? "Instagram" : showConnectModal === "facebook" ? "Facebook" : "LinkedIn"} Page
             </h3>
 
             {/* Mode Toggle */}
@@ -1704,7 +1759,7 @@ export default function Dashboard() {
 
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
               {connectMode === "oauth"
-                ? `Connect your real ${showConnectModal === "instagram" ? "Instagram/Facebook" : "LinkedIn"} profile securely via official OAuth integration.`
+                ? `Connect your real ${showConnectModal === "instagram" ? "Instagram" : showConnectModal === "facebook" ? "Facebook" : "LinkedIn"} profile securely via official OAuth integration.`
                 : connectMode === "mock"
                 ? "This simulates OAuth for local testing. No real API calls will be made."
                 : "Enter your API credentials manually. Tokens are encrypted before storage."}
@@ -1716,7 +1771,7 @@ export default function Dashboard() {
                   <div className="text-3xl">🔑</div>
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                      Redirecting to {showConnectModal === "instagram" ? "Facebook" : "LinkedIn"}
+                      Redirecting to {showConnectModal === "instagram" ? "Instagram" : showConnectModal === "facebook" ? "Facebook" : "LinkedIn"}
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 max-w-xs leading-normal">
                       You will authorize SocialForge to publish posts on your behalf.
@@ -1729,14 +1784,14 @@ export default function Dashboard() {
                 <div className="animate-fade-in space-y-3">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                      {showConnectModal === "instagram" ? "Instagram User ID" : "LinkedIn Author URN"}
+                      {showConnectModal === "instagram" ? "Instagram User ID" : showConnectModal === "facebook" ? "Facebook Page ID" : "LinkedIn Author URN"}
                     </label>
                     <input
                       type="text"
                       value={connectAccountId}
                       onChange={(e) => setConnectAccountId(e.target.value)}
                       className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-850 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-950 focus:border-teal-500 focus:outline-none"
-                      placeholder={showConnectModal === "instagram" ? "1234567890" : "urn:li:person:abc123"}
+                      placeholder={showConnectModal === "instagram" ? "1234567890" : showConnectModal === "facebook" ? "987654321" : "urn:li:person:abc123"}
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -1774,7 +1829,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      placeholder={showConnectModal === "instagram" ? "e.g., creator_forge" : "e.g., in/creator-forge"}
+                      placeholder={showConnectModal === "instagram" ? "e.g., creator_forge" : showConnectModal === "facebook" ? "e.g., my_facebook_page" : "e.g., in/creator-forge"}
                       value={connectUsername}
                       onChange={(e) => setConnectUsername(e.target.value)}
                       className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-850 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-950 focus:border-teal-500 focus:outline-none"
@@ -1817,7 +1872,7 @@ export default function Dashboard() {
                 {connectLoading ? (
                   <RefreshCw className="h-3 w-3 animate-spin text-white dark:text-slate-950" />
                 ) : connectMode === "oauth" ? (
-                  `Authorize on ${showConnectModal === "instagram" ? "Facebook" : "LinkedIn"}`
+                  `Authorize on ${showConnectModal === "instagram" ? "Instagram" : showConnectModal === "facebook" ? "Facebook" : "LinkedIn"}`
                 ) : (
                   "Connect"
                 )}

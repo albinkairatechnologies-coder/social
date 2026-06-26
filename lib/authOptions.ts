@@ -3,8 +3,24 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
+import FacebookProvider from "next-auth/providers/facebook";
+import InstagramProvider from "next-auth/providers/instagram";
+import LinkedInProvider from "next-auth/providers/linkedin";
+
 export const authOptions: AuthOptions = {
   providers: [
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID || "mock_fb",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "mock_fb",
+    }),
+    InstagramProvider({
+      clientId: process.env.INSTAGRAM_CLIENT_ID || "mock_ig",
+      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "mock_ig",
+    }),
+    LinkedInProvider({
+      clientId: process.env.LINKEDIN_CLIENT_ID || "mock_li",
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET || "mock_li",
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
