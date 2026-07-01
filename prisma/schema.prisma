@@ -10,8 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -20,17 +18,33 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  posts         Post[]
-  media         Media[]
-  clientTasks   ClientTask[]
-  documents     Document[]
-  invoices      Invoice[]
+  
+  clients       Client[]
+  notifications Notification[]
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  company     String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  accounts    Account[]
+  posts       Post[]
+  media       Media[]
+  clientTasks ClientTask[]
+  documents   Document[]
+  invoices    Invoice[]
 }
 
 model Account {
   id                  String   @id @default(cuid())
-  userId              String
+  clientId            String
   provider            String   // 'instagram' or 'linkedin'
   providerAccountId   String   // Platform user ID
   accessToken         String   // ENCRYPTED access token
@@ -43,14 +57,14 @@ model Account {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model Post {
   id           String    @id @default(cuid())
-  userId       String
+  clientId     String
   caption      String
   firstComment String?   // Optional: First comment (often hashtags)
   hashtags     String?
@@ -63,7 +77,7 @@ model Post {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   media       Media[]
   publishJobs PublishJob[]
   analytics   Analytics[]
@@ -72,7 +86,7 @@ model Post {
 
 model Media {
   id        String   @id @default(cuid())
-  userId    String
+  clientId  String
   url       String   // Local path or external URL (Vercel Blob / Supabase)
   type      String   // IMAGE or VIDEO
   width     Int?
@@ -82,8 +96,8 @@ model Media {
   postId    String?
   createdAt DateTime @default(now())
 
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  post   Post?  @relation(fields: [postId], references: [id], onDelete: SetNull)
 }
 
 model PublishJob {
@@ -139,38 +153,43 @@ model Notification {
   type      String   // INFO, SUCCESS, ALERT, ENGAGEMENT
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ClientTask {
   id          String   @id @default(cuid())
-  userId      String
+  clientId    String
   title       String
   type        String   // VIDEO, POSTER, OTHER
   status      String   // PENDING, IN_PROGRESS, TESTING, COMPLETED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
 
 model Document {
   id          String   @id @default(cuid())
-  userId      String
+  clientId    String
   title       String
   url         String
   type        String
   size        Int?
   createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
 
 model Invoice {
   id          String   @id @default(cuid())
-  userId      String
+  clientId    String
   title       String
   amount      Float
   status      String   // PAID, UNPAID, OVERDUE
   dueDate     DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }

@@ -8,14 +8,16 @@ export async function POST(req: NextRequest) {
   
   const userId = session?.user?.id;
   if (!userId) {
-    // If running in local demo without auth, we might just use a placeholder
-    // But ideally they are logged in.
     return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const { videoCount = 0, posterCount = 0 } = body;
+    const { videoCount = 0, posterCount = 0, clientId } = body;
+
+    if (!clientId) {
+      return NextResponse.json({ error: "Client ID is required." }, { status: 400 });
+    }
 
     if (typeof videoCount !== 'number' || typeof posterCount !== 'number') {
       return NextResponse.json({ error: "Invalid counts provided." }, { status: 400 });
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
     // Queue up video tasks
     for (let i = 1; i <= videoCount; i++) {
       tasksToCreate.push({
-        userId,
+        clientId,
         title: `Planned Video Task #${i}`,
         type: "VIDEO",
         status: "PENDING"
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
     // Queue up poster tasks
     for (let i = 1; i <= posterCount; i++) {
       tasksToCreate.push({
-        userId,
+        clientId,
         title: `Planned Poster Task #${i}`,
         type: "POSTER",
         status: "PENDING"

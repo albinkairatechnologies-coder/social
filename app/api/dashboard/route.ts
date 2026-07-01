@@ -21,19 +21,23 @@ const MOCK_COMMENTS = [
 ];
 
 export async function GET(req: NextRequest) {
-  // Session check
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id || "local-dev-user-id";
+  const clientId = req.nextUrl.searchParams.get("clientId");
+
+  if (!clientId) {
+    return NextResponse.json({ error: "Missing clientId" }, { status: 400 });
+  }
 
   try {
     // 1. Fetch connected accounts
     const accounts = await prisma.account.findMany({
-      where: { userId },
+      where: { clientId },
     });
 
     // 2. Fetch post history (scheduled, published, failed)
     const posts = await prisma.post.findMany({
-      where: { userId },
+      where: { clientId },
       include: { 
         media: true, 
         publishJobs: true,
@@ -106,7 +110,7 @@ export async function GET(req: NextRequest) {
 
     // 4. Re-fetch posts & analytics after running the simulation updates
     const refreshedPosts = await prisma.post.findMany({
-      where: { userId },
+      where: { clientId },
       include: { 
         media: true, 
         publishJobs: true,
@@ -124,21 +128,21 @@ export async function GET(req: NextRequest) {
     // Re-fetch analytics records
     const allAnalytics = await prisma.analytics.findMany({
       where: {
-        post: { userId },
+        post: { clientId },
       },
       orderBy: { recordedAt: "desc" }
     });
 
-    // Fetch Notifications
+    // Fetch Notifications (Still tied to Admin User)
     const notifications = await prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: 12
     });
 
-    const clientTasks = await prisma.clientTask.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
-    const documents = await prisma.document.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
-    const invoices = await prisma.invoice.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+    const clientTasks = await prisma.clientTask.findMany({ where: { clientId }, orderBy: { createdAt: "desc" } });
+    const documents = await prisma.document.findMany({ where: { clientId }, orderBy: { createdAt: "desc" } });
+    const invoices = await prisma.invoice.findMany({ where: { clientId }, orderBy: { createdAt: "desc" } });
 
     // If database has no posts or accounts, we return a hybrid payload with demo metrics
     if (refreshedPosts.length === 0 && accounts.length === 0) {
@@ -182,7 +186,7 @@ export async function GET(req: NextRequest) {
       const demoPosts = [
         {
           id: "demo-post-1",
-          userId,
+          clientId,
           caption: "AI-powered social media automation is the future. SocialForge allows you to build vertical Imagen 3 assets and schedule them globally. ✨",
           hashtags: "#marketing #artificialintelligence #future",
           scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // In 2 days
@@ -202,7 +206,7 @@ export async function GET(req: NextRequest) {
         },
         {
           id: "demo-post-2",
-          userId,
+          clientId,
           caption: "Launching our brand new beta tools today! Try out the AI vertical asset creator. 🚀 #SaaS #buildinpublic",
           hashtags: "#buildinpublic #SaaS",
           scheduledAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
@@ -225,7 +229,7 @@ export async function GET(req: NextRequest) {
         },
         {
           id: "demo-post-3",
-          userId,
+          clientId,
           caption: "This post failed to publish due to expired tokens. Re-authenticate accounts to fix. #marketing",
           hashtags: "#error",
           scheduledAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
