@@ -44,7 +44,7 @@ model Client {
 
 model Account {
   id                  String   @id @default(cuid())
-  clientId            String
+  clientId            String   @default("legacy-client")
   provider            String   // 'instagram' or 'linkedin'
   providerAccountId   String   // Platform user ID
   accessToken         String   // ENCRYPTED access token
@@ -64,7 +64,7 @@ model Account {
 
 model Post {
   id           String    @id @default(cuid())
-  clientId     String
+  clientId     String    @default("legacy-client")
   caption      String
   firstComment String?   // Optional: First comment (often hashtags)
   hashtags     String?
@@ -86,7 +86,7 @@ model Post {
 
 model Media {
   id        String   @id @default(cuid())
-  clientId  String
+  clientId  String   @default("legacy-client")
   url       String   // Local path or external URL (Vercel Blob / Supabase)
   type      String   // IMAGE or VIDEO
   width     Int?
@@ -159,7 +159,7 @@ model Notification {
 
 model ClientTask {
   id          String   @id @default(cuid())
-  clientId    String
+  clientId    String   @default("legacy-client")
   title       String
   type        String   // VIDEO, POSTER, OTHER
   status      String   // PENDING, IN_PROGRESS, TESTING, COMPLETED
@@ -171,7 +171,7 @@ model ClientTask {
 
 model Document {
   id          String   @id @default(cuid())
-  clientId    String
+  clientId    String   @default("legacy-client")
   title       String
   url         String
   type        String
@@ -183,7 +183,7 @@ model Document {
 
 model Invoice {
   id          String   @id @default(cuid())
-  clientId    String
+  clientId    String   @default("legacy-client")
   title       String
   amount      Float
   status      String   // PAID, UNPAID, OVERDUE
