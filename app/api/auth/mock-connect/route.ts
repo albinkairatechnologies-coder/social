@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         platformDisplayName: displayName,
       },
       create: {
-        userId,
+        clientId: "legacy-client",
         provider,
         providerAccountId,
         accessToken: mockAccessToken,

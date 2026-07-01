@@ -88,7 +88,7 @@ export async function processDueJobs(): Promise<{ processedCount: number; succes
       // 2. Fetch the connected OAuth Account for this platform
       const account = await prisma.account.findFirst({
         where: {
-          userId: post.userId,
+          clientId: post.clientId,
           provider: job.platform.toLowerCase(), // 'instagram' or 'linkedin'
         },
       });

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     // Save media log record to the database for this user
     const mediaRecord = await prisma.media.create({
       data: {
-        userId: session.user.id,
+        clientId: req.headers.get("x-client-id") || "legacy-client",
         url: mediaUrl,
         type: "IMAGE",
         width: 1024, // Imagen 3 default standard vertical width/height sizing

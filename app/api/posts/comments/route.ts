@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       where: { id: postId },
     });
 
-    if (!post || post.userId !== userId) {
+    if (!post || post.clientId !== "legacy-client") {
       return NextResponse.json({ error: "Post not found or unauthorized." }, { status: 404 });
     }
 

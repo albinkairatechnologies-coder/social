@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
         updatedAt: new Date(),
       },
       create: {
-        userId: session.user.id,
+        clientId: "legacy-client",
         provider: "instagram",
         providerAccountId: instagramUserId,
         accessToken: encryptedAccessToken,

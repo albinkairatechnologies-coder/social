@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
         updatedAt: new Date(),
       },
       create: {
-        userId: session.user.id,
+        clientId: "legacy-client",
         provider: "linkedin",
         providerAccountId: `urn:li:person:${userId}`,
         accessToken: encryptedAccessToken,

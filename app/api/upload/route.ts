@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     // Track the media upload in Prisma database
     const media = await prisma.media.create({
       data: {
-        userId: session.user.id,
+        clientId: req.headers.get("x-client-id") || "legacy-client",
         url: mediaUrl,
         type: mediaType,
         source: "UPLOAD",

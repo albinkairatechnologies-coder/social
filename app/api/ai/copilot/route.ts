@@ -27,11 +27,11 @@ export async function POST(req: NextRequest) {
 
     // 1. Retrieve current workspace state for context
     const accounts = await prisma.account.findMany({
-      where: { userId },
+      where: { clientId: req.headers.get("x-client-id") || "legacy-client" },
     });
 
     const posts = await prisma.post.findMany({
-      where: { userId },
+      where: { clientId: req.headers.get("x-client-id") || "legacy-client" },
       include: { analytics: true },
       orderBy: { createdAt: "desc" },
       take: 10, // last 10 posts for context
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     let totalLikes = 0;
     let totalComments = 0;
     posts.forEach(p => {
-      p.analytics.forEach(a => {
+      if (p.analytics) p.analytics.forEach((a: any) => {
         totalImpressions += a.impressions;
         totalLikes += a.likes;
         totalComments += a.comments;

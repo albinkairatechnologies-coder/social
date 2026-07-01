@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     // 1. Create the Post database entry
   const post = await prisma.post.create({
     data: {
-      userId: session.user.id,
+      clientId: req.headers.get("x-client-id") || "legacy-client",
       caption: caption,
       firstComment: firstComment || null,
       hashtags: hashtags || null,
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       // Find the media record (either created by AI or local upload)
       const existingMedia = await prisma.media.findFirst({
         where: {
-          userId: session.user.id,
+          clientId: req.headers.get("x-client-id") || "legacy-client",
           url: mediaUrl,
         },
       });
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         // Create new media log if it wasn't tracked yet
         await prisma.media.create({
           data: {
-            userId: session.user.id,
+            clientId: req.headers.get("x-client-id") || "legacy-client",
             postId: post.id,
             url: mediaUrl,
             type: mediaType || "IMAGE",
@@ -121,7 +121,7 @@ export async function DELETE(req: NextRequest) {
       where: { id: postId },
     });
 
-    if (!post || post.userId !== session.user.id) {
+    if (!post || post.clientId !== (req.headers.get("x-client-id") || "legacy-client")) {
       return NextResponse.json({ error: "Post not found or unauthorized." }, { status: 404 });
     }
 
@@ -156,7 +156,7 @@ export async function PATCH(req: NextRequest) {
       where: { id: postId },
     });
 
-    if (!post || post.userId !== session.user.id) {
+    if (!post || post.clientId !== (req.headers.get("x-client-id") || "legacy-client")) {
       return NextResponse.json({ error: "Post not found or unauthorized." }, { status: 404 });
     }
 

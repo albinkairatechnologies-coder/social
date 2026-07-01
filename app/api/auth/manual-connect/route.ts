@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       },
       create: {
-        userId: session.user.id,
+        clientId: "legacy-client",
         provider,
         providerAccountId,
         accessToken: encryptedAccessToken,

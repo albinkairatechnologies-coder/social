@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     // Delete connected account
     await prisma.account.deleteMany({
       where: {
-        userId: user.id,
+        // removed userId
         provider: provider,
       },
     });

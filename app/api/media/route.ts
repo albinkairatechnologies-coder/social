@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const media = await prisma.media.findMany({
-      where: { userId },
+      where: { clientId: "legacy-client" },
       orderBy: { createdAt: "desc" },
     });
 
