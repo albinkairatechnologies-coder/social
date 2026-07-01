@@ -136,6 +136,10 @@ export async function GET(req: NextRequest) {
       take: 12
     });
 
+    const clientTasks = await prisma.clientTask.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+    const documents = await prisma.document.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+    const invoices = await prisma.invoice.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+
     // If database has no posts or accounts, we return a hybrid payload with demo metrics
     if (refreshedPosts.length === 0 && accounts.length === 0) {
       console.log("[Dashboard API] Empty database detected. Returning premium sandbox mock details.");
@@ -246,12 +250,30 @@ export async function GET(req: NextRequest) {
         { id: "n2", userId, title: "New Engagement Event", message: "Sarah Connor liked and commented on your LinkedIn post.", type: "ENGAGEMENT", read: false, createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000) }
       ];
 
+      const demoClientTasks = [
+        { id: "t1", title: "Promo Video Q3", type: "VIDEO", status: "IN_PROGRESS" },
+        { id: "t2", title: "Summer Campaign Poster", type: "POSTER", status: "TESTING" },
+        { id: "t3", title: "Reels batch #4", type: "VIDEO", status: "PENDING" }
+      ];
+      
+      const demoDocuments = [
+        { id: "d1", title: "Brand Guidelines.pdf", url: "#", type: "PDF", size: 2048000, createdAt: new Date() }
+      ];
+      
+      const demoInvoices = [
+        { id: "i1", title: "June Social Media Mgmt", amount: 1500, status: "UNPAID", dueDate: new Date(Date.now() + 5*24*60*60*1000) },
+        { id: "i2", title: "May Content Creation", amount: 1200, status: "PAID", dueDate: new Date(Date.now() - 15*24*60*60*1000) }
+      ];
+
       return NextResponse.json({
         success: true,
         isDemo: true,
         accounts: demoAccounts,
         posts: demoPosts,
         notifications: demoNotifications,
+        clientTasks: demoClientTasks,
+        documents: demoDocuments,
+        invoices: demoInvoices,
         metrics: {
           totalScheduled: 1,
           totalPublished: 1,
@@ -295,6 +317,9 @@ export async function GET(req: NextRequest) {
       accounts,
       posts: parsedPosts,
       notifications,
+      clientTasks,
+      documents,
+      invoices,
       metrics: {
         totalScheduled,
         totalPublished,

@@ -30,7 +30,16 @@ import {
   User,
   Smile,
   ThumbsUp,
-  MessageSquare
+  MessageSquare,
+  Play,
+  CheckCircle,
+  FileText,
+  Upload,
+  CreditCard,
+  DollarSign,
+  Edit2,
+  Save,
+  ImageIcon
 } from "lucide-react";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -115,6 +124,9 @@ export default function Dashboard() {
 
   // State for Advanced Features
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [clientTasks, setClientTasks] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [platformFilter, setPlatformFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("RECENT");
@@ -125,6 +137,14 @@ export default function Dashboard() {
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [adminReplyText, setAdminReplyText] = useState<Record<string, string>>({});
   const [showNotifications, setShowNotifications] = useState(false);
+  
+  // State for Editing Tasks
+  const [editingTask, setEditingTask] = useState<any | null>(null);
+
+  // State for Bulk Task Creation
+  const [planVideosCount, setPlanVideosCount] = useState<number | "">("");
+  const [planPostersCount, setPlanPostersCount] = useState<number | "">("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -161,6 +181,9 @@ export default function Dashboard() {
         setPosts(data.posts || []);
         setAccounts(data.accounts || []);
         setNotifications(data.notifications || []);
+        setClientTasks(data.clientTasks || []);
+        setDocuments(data.documents || []);
+        setInvoices(data.invoices || []);
         setMetrics(
           data.metrics || {
             totalScheduled: 0,
@@ -182,6 +205,13 @@ export default function Dashboard() {
   useEffect(() => {
     if (status === "authenticated") {
       fetchDashboardData();
+      
+      // Auto-refresh every 15 seconds for real-time updates
+      const interval = setInterval(() => {
+        fetchDashboardData();
+      }, 15000);
+      
+      return () => clearInterval(interval);
     }
   }, [status]);
 
@@ -488,6 +518,60 @@ export default function Dashboard() {
     });
   };
 
+  const handleGeneratePlan = async () => {
+    if (!planVideosCount && !planPostersCount) return;
+    setIsGenerating(true);
+    try {
+      const res = await fetch("/api/client-tasks/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoCount: Number(planVideosCount) || 0,
+          posterCount: Number(planPostersCount) || 0
+        })
+      });
+      if (res.ok) {
+        setPlanVideosCount("");
+        setPlanPostersCount("");
+        fetchDashboardData();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to generate tasks.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate tasks.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleUpdateTask = async () => {
+    if (!editingTask) return;
+    try {
+      const res = await fetch("/api/client-tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTask.id,
+          title: editingTask.title,
+          type: editingTask.type,
+          status: editingTask.status
+        })
+      });
+      if (res.ok) {
+        setEditingTask(null);
+        fetchDashboardData();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to update task.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update task.");
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -664,6 +748,253 @@ export default function Dashboard() {
               <Sparkles className="h-4 w-4 text-purple-500 animate-bounce" />
               <span>AI Image Forge</span>
             </Link>
+          </div>
+        </div>
+
+        {/* CLIENT WORK DASHBOARD */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span className="w-2 h-6 bg-teal-500 rounded-full inline-block"></span>
+              Client Work Overview
+            </h2>
+            <span className="text-[10px] bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded-full font-bold animate-pulse flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-teal-500 rounded-full"></span> Live Updates Active
+            </span>
+          </div>
+
+          {/* CONTENT PLANNER */}
+          <div className="bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-3xl p-6 flex flex-col md:flex-row gap-6 items-center justify-between shadow-sm">
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Plan New Content</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Instantly generate pending tasks for the client's upcoming month.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+              <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-auto shadow-sm focus-within:border-indigo-500 transition-colors">
+                <Play className="h-4 w-4 text-indigo-400" />
+                <input 
+                  type="number" 
+                  min="0"
+                  placeholder="Videos"
+                  value={planVideosCount}
+                  onChange={(e) => setPlanVideosCount(e.target.value === "" ? "" : parseInt(e.target.value))}
+                  className="bg-transparent border-none text-sm w-16 focus:outline-none text-slate-800 dark:text-slate-100 font-bold placeholder-slate-400"
+                />
+              </div>
+              <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-auto shadow-sm focus-within:border-pink-500 transition-colors">
+                <ImageIcon className="h-4 w-4 text-pink-400" />
+                <input 
+                  type="number" 
+                  min="0"
+                  placeholder="Posters"
+                  value={planPostersCount}
+                  onChange={(e) => setPlanPostersCount(e.target.value === "" ? "" : parseInt(e.target.value))}
+                  className="bg-transparent border-none text-sm w-16 focus:outline-none text-slate-800 dark:text-slate-100 font-bold placeholder-slate-400"
+                />
+              </div>
+              <button
+                onClick={handleGeneratePlan}
+                disabled={isGenerating || (!planVideosCount && !planPostersCount)}
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+              >
+                {isGenerating ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {isGenerating ? "Generating..." : "Generate Tasks"}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Videos Work */}
+            <div className="bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800/80 p-6 shadow-sm flex flex-col justify-between hover:-translate-y-1 transition-transform">
+              <div className="flex justify-between items-start">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Videos Work</span>
+                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-xl">
+                  <Play className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-4xl font-black text-slate-800 dark:text-slate-100">{clientTasks.filter(t => t.type === 'VIDEO').length}</span>
+                <span className="text-xs font-semibold text-slate-450 dark:text-slate-500">in progress</span>
+              </div>
+            </div>
+
+            {/* Posters Work */}
+            <div className="bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800/80 p-6 shadow-sm flex flex-col justify-between hover:-translate-y-1 transition-transform">
+              <div className="flex justify-between items-start">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Posters Work</span>
+                <div className="p-2 bg-pink-50 dark:bg-pink-900/20 text-pink-500 rounded-xl">
+                  <ImageIcon className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-4xl font-black text-slate-800 dark:text-slate-100">{clientTasks.filter(t => t.type === 'POSTER').length}</span>
+                <span className="text-xs font-semibold text-slate-450 dark:text-slate-500">in progress</span>
+              </div>
+            </div>
+
+            {/* Pending Work */}
+            <div className="bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800/80 p-6 shadow-sm flex flex-col justify-between hover:-translate-y-1 transition-transform">
+              <div className="flex justify-between items-start">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending Work</span>
+                <div className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl">
+                  <Clock className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-4xl font-black text-slate-800 dark:text-slate-100">{clientTasks.filter(t => t.status === 'PENDING').length}</span>
+                <span className="text-xs font-semibold text-slate-450 dark:text-slate-500">awaiting action</span>
+              </div>
+            </div>
+
+            {/* Testing/QA Work */}
+            <div className="bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800/80 p-6 shadow-sm flex flex-col justify-between hover:-translate-y-1 transition-transform">
+              <div className="flex justify-between items-start">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Testing / QA Status</span>
+                <div className="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-xl">
+                  <CheckCircle className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-4xl font-black text-slate-800 dark:text-slate-100">{clientTasks.filter(t => t.status === 'TESTING').length}</span>
+                <span className="text-xs font-semibold text-slate-450 dark:text-slate-500">in review</span>
+              </div>
+            </div>
+          </div>
+
+          {/* TASK LIST (Pending Works & Poster/Videos) */}
+          <div className="bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800/80 p-6 shadow-sm overflow-hidden">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-purple-500" />
+              All Client Works
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <th className="pb-3 pr-4">Task Name</th>
+                    <th className="pb-3 px-4">Type</th>
+                    <th className="pb-3 px-4">Status</th>
+                    <th className="pb-3 pl-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clientTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-xs text-slate-400">No client works available.</td>
+                    </tr>
+                  ) : clientTasks.map((task: any) => (
+                    <tr key={task.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                      <td className="py-3 pr-4">
+                        <span className="text-sm font-bold text-slate-750 dark:text-slate-200">{task.title}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
+                          task.type === 'VIDEO' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20' : 
+                          task.type === 'POSTER' ? 'bg-pink-50 text-pink-600 dark:bg-pink-900/20' : 
+                          'bg-slate-100 text-slate-600 dark:bg-slate-800'
+                        }`}>
+                          {task.type}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
+                          task.status === 'PENDING' ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20' : 
+                          task.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 
+                          task.status === 'TESTING' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' : 
+                          'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20'
+                        }`}>
+                          {task.status}
+                        </span>
+                      </td>
+                      <td className="py-3 pl-4 text-right">
+                        <button 
+                          onClick={() => setEditingTask({...task})}
+                          className="p-1.5 text-slate-400 hover:text-teal-600 bg-slate-100 hover:bg-teal-50 dark:bg-slate-800 dark:hover:bg-teal-900/30 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                          <span className="text-[10px] font-bold">Edit</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Documents */}
+            <div className="bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800/80 p-6 shadow-sm flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  Documents
+                </h3>
+                <button 
+                  onClick={() => alert("Document uploads will be available in the next update!")}
+                  className="text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Upload className="h-3.5 w-3.5" /> Upload
+                </button>
+              </div>
+              <div className="space-y-3 overflow-y-auto max-h-[200px] pr-2">
+                {documents.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4">No documents available.</p>
+                ) : documents.map((doc: any) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-lg">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-750 dark:text-slate-200">{doc.title}</p>
+                        <p className="text-[10px] text-slate-450 font-medium">Uploaded {new Date(doc.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <a href={doc.url} className="text-xs font-bold text-teal-600 hover:text-teal-700 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 dark:bg-teal-900/20 dark:hover:bg-teal-900/40 rounded-lg transition-colors">View</a>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Invoices */}
+            <div className="bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800/80 p-6 shadow-sm flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-emerald-500" />
+                  Invoices
+                </h3>
+                <button 
+                  onClick={() => alert("Invoice creation will be available in the next update!")}
+                  className="text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add
+                </button>
+              </div>
+              <div className="space-y-3 overflow-y-auto max-h-[200px] pr-2">
+                {invoices.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4">No invoices available.</p>
+                ) : invoices.map((inv: any) => (
+                  <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${inv.status === 'PAID' ? 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20' : 'bg-rose-50 text-rose-500 dark:bg-rose-900/20'}`}>
+                        <DollarSign className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-750 dark:text-slate-200">{inv.title}</p>
+                        <p className="text-[10px] text-slate-450 font-medium">Due {new Date(inv.dueDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-black text-slate-800 dark:text-slate-100">${inv.amount}</span>
+                      <span className={`text-[9px] font-bold px-2 py-1 rounded-md ${inv.status === 'PAID' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400'}`}>
+                        {inv.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1876,6 +2207,84 @@ export default function Dashboard() {
                 ) : (
                   "Connect"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT TASK MODAL */}
+      {editingTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Edit2 className="h-4 w-4 text-teal-500" />
+                Edit Client Work
+              </h3>
+              <button
+                onClick={() => setEditingTask(null)}
+                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Task Name</label>
+                <input 
+                  type="text" 
+                  value={editingTask.title} 
+                  onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Type</label>
+                  <select 
+                    value={editingTask.type} 
+                    onChange={(e) => setEditingTask({...editingTask, type: e.target.value})}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:border-teal-500 focus:outline-none cursor-pointer"
+                  >
+                    <option value="VIDEO">Video</option>
+                    <option value="POSTER">Poster</option>
+                    <option value="DOCUMENT">Document</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Status</label>
+                  <select 
+                    value={editingTask.status} 
+                    onChange={(e) => setEditingTask({...editingTask, status: e.target.value})}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:border-teal-500 focus:outline-none cursor-pointer"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="TESTING">Testing / QA</option>
+                    <option value="COMPLETED">Completed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50/50 dark:bg-slate-800/20">
+              <button 
+                onClick={() => setEditingTask(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUpdateTask}
+                className="px-5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Save className="h-3.5 w-3.5" />
+                Save Changes
               </button>
             </div>
           </div>
