@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate && prisma db push --force-reset"
+    "postinstall": "prisma generate && prisma db push --force-reset",
+    "test": "node .github/init.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
