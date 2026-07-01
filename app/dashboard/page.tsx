@@ -27,6 +27,8 @@ export default function AgencyDashboard() {
   
   const [newClientName, setNewClientName] = useState("");
   const [newClientCompany, setNewClientCompany] = useState("");
+  const [newClientEmail, setNewClientEmail] = useState("");
+  const [newClientPassword, setNewClientPassword] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -63,15 +65,23 @@ export default function AgencyDashboard() {
       const res = await fetch("/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newClientName, company: newClientCompany }),
+        body: JSON.stringify({ 
+          name: newClientName, 
+          company: newClientCompany,
+          email: newClientEmail,
+          password: newClientPassword
+        }),
       });
       if (res.ok) {
         setShowAddModal(false);
         setNewClientName("");
         setNewClientCompany("");
+        setNewClientEmail("");
+        setNewClientPassword("");
         fetchClients();
       } else {
-        alert("Failed to add client");
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Failed to add client: ${errorData.error || "Unknown error"}`);
       }
     } catch (err) {
       console.error(err);
@@ -269,14 +279,39 @@ export default function AgencyDashboard() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 mb-1.5">Company Name (Optional)</label>
-                  <input 
+                  <input
                     type="text"
                     value={newClientCompany}
-                    onChange={e => setNewClientCompany(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(e) => setNewClientCompany(e.target.value)}
                     placeholder="e.g. Acme Corp"
+                    className="w-full text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2.5 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all font-medium"
                   />
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Client Login Email *</label>
+                  <input
+                    type="email"
+                    required
+                    value={newClientEmail}
+                    onChange={(e) => setNewClientEmail(e.target.value)}
+                    placeholder="client@company.com"
+                    className="w-full text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2.5 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Client Login Password *</label>
+                  <input
+                    type="password"
+                    required
+                    value={newClientPassword}
+                    onChange={(e) => setNewClientPassword(e.target.value)}
+                    placeholder="Temporary password"
+                    className="w-full text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2.5 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all font-medium"
+                  />
+                </div>
+
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     type="button"

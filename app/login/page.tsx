@@ -22,7 +22,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/dashboard");
+      if ((session.user as any)?.role === "CLIENT" && (session.user as any)?.clientId) {
+        router.push(`/clients/${(session.user as any).clientId}`);
+      } else {
+        router.push("/dashboard");
+      }
     }
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -53,19 +57,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      if (!isLogin) {
-        // Register user
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || "Registration failed");
-        }
-      }
-
+      // Only Sign in allowed now
       // Sign in
       const result = await signIn("credentials", {
         email: formData.email,
@@ -136,28 +128,12 @@ export default function LoginPage() {
             SocialForge
           </h1>
           <p className="text-muted-foreground text-sm font-medium">
-            {isLogin ? "Welcome back! Sign in to continue" : "Create your account and start automating"}
+            Welcome back! Sign in to continue
           </p>
         </div>
 
         <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-150/10 dark:shadow-none transition-all">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                  <User className="w-3.5 h-3.5" />
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground/60 focus:bg-white dark:focus:bg-background focus:border-indigo-500 focus:outline-none transition-all font-medium"
-                  placeholder="John Doe"
-                />
-              </div>
-            )}
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -209,7 +185,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-slate-205 text-white dark:text-slate-950 font-extrabold py-3 rounded-lg transition-all duration-300 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer mb-2"
             >
-              {isLoading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
+              {isLoading ? "Processing..." : "Sign In"}
             </button>
 
             <button
@@ -259,20 +235,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-slate-500 dark:text-slate-450 font-medium">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError("");
-                }}
-                className="text-indigo-600 dark:text-teal-400 font-extrabold hover:underline transition-colors cursor-pointer"
-              >
-                {isLogin ? "Sign Up" : "Sign In"}
-              </button>
-            </p>
-          </div>
+
         </div>
       </div>
     </div>

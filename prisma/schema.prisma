@@ -16,23 +16,27 @@ model User {
   email         String    @unique
   password      String // Hashed password
   image         String?
+  role          String    @default("CLIENT") // ADMIN or CLIENT
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
-  clients       Client[]
+  clients       Client[]       @relation("AgencyOwner")
+  clientProfile Client?        @relation("ClientLogin")
   notifications Notification[]
 }
 
 model Client {
   id          String   @id @default(cuid())
   userId      String
+  loginUserId String?  @unique
   name        String
   company     String?
   avatarUrl   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation("AgencyOwner", fields: [userId], references: [id], onDelete: Cascade)
+  loginUser   User?    @relation("ClientLogin", fields: [loginUserId], references: [id], onDelete: SetNull)
   
   accounts    Account[]
   posts       Post[]

@@ -52,6 +52,7 @@ export const authOptions: AuthOptions = {
           name: user.name,
           email: user.email,
           image: user.image,
+          role: user.role,
         };
       },
     }),
@@ -63,6 +64,16 @@ export const authOptions: AuthOptions = {
         token.email = user.email;
         token.name = user.name;
         token.picture = user.image;
+        token.role = (user as any).role;
+      }
+      // If client, fetch their clientId
+      if (token.role === "CLIENT" && !token.clientId) {
+        const clientProfile = await prisma.client.findFirst({
+          where: { loginUserId: token.id as string }
+        });
+        if (clientProfile) {
+          token.clientId = clientProfile.id;
+        }
       }
       return token;
     },
@@ -72,6 +83,10 @@ export const authOptions: AuthOptions = {
         session.user.email = token.email as string;
         session.user.name = token.name as string;
         session.user.image = token.picture as string;
+        (session.user as any).role = token.role as string;
+        if (token.clientId) {
+          (session.user as any).clientId = token.clientId as string;
+        }
       }
       return session;
     },

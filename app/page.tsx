@@ -217,15 +217,9 @@ export default function Home() {
                 </button>
                 <Link
                   href="/login?mode=login"
-                  className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors px-3 py-2"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/login?mode=signup"
                   className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-4.5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-100 transition-all transform active:scale-95 cursor-pointer"
                 >
-                  <span>Launch Free</span>
+                  <span>Log In</span>
                 </Link>
               </>
             </div>
@@ -263,11 +257,11 @@ export default function Home() {
                     <span>Demo Access</span>
                   </button>
                   <Link
-                    href="/login?mode=signup"
+                    href="/login?mode=login"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="w-full flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-3 text-sm font-bold text-white shadow-lg"
                   >
-                    <span>Launch Free</span>
+                    <span>Log In</span>
                   </Link>
                 </>
             </div>
@@ -310,10 +304,10 @@ export default function Home() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
             <Link
-              href="/login?mode=signup"
+              href="/login?mode=login"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 px-7 py-4 text-sm font-bold text-white shadow-xl shadow-slate-350 transition-all transform hover:-translate-y-0.5 cursor-pointer"
             >
-              Get Started for Free
+              Sign In to Platform
               <ArrowRight className="h-4.5 w-4.5 text-teal-400" />
             </Link>
             <button
